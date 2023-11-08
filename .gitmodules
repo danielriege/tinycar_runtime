@@ -1,0 +1,7 @@
+[submodule "nv"]
+	path = nv
+	url = git@github.com:nsch0e/nv.git
+[submodule "imgui"]
+	path = imgui
+	url = git@github.com:ocornut/imgui.git
+	branch = docking
