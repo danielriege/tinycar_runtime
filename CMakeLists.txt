@@ -15,11 +15,11 @@ find_package(OpenGL REQUIRED)
 find_package(OpenCV REQUIRED)
 
 # Dear ImGui
-set(IMGUI_DIR $ENV{HOME}/libraries/imgui)
+set(IMGUI_DIR ./imgui)
 include_directories(${IMGUI_DIR} ${IMGUI_DIR}/backends ..)
 
 
-set(NV_DIR $ENV{HOME}/libraries/nv)
+set(NV_DIR ./nv)
 
 set(SOURCES
 main.cpp
