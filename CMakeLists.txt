@@ -8,6 +8,7 @@ endif()
 set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ")
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O3")
 
+set( CMAKE_EXPORT_COMPILE_COMMANDS ON )
 
 set(OpenGL_GL_PREFERENCE "LEGACY")
 find_package(glfw3 3.3 REQUIRED)
@@ -17,8 +18,6 @@ find_package(OpenCV REQUIRED)
 # Dear ImGui
 set(IMGUI_DIR ./imgui)
 include_directories(${IMGUI_DIR} ${IMGUI_DIR}/backends ..)
-
-
 set(NV_DIR ./nv)
 
 set(SOURCES
