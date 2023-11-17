@@ -1,4 +1,6 @@
-# tinycar_runtime
+# Tinycar Runtime
+Workspace to develop and test the tinycar autonomous driving stack. It features a GUI based on Imgui and [nv](https://github.com/nsch0e/nv) for parameter tuning and visualization.
+It is meant to be always WIP and not a production ready solution. Using different backends, neural networks can run on different platforms.
 
 ## List of env variables
 Options are set if value equals 1
