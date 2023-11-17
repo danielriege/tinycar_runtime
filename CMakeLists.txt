@@ -16,7 +16,7 @@ if (APPLE)
         Have ${CMAKE_CXX_COMPILER_ID}")
     endif()
 
-    list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
+    list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/swift")
 
     include(InitializeSwift)
     # cmake/modules/AddSwift.cmake provides the function for creating the Swift to
@@ -36,6 +36,15 @@ else()
 ###################
     project(tinycar_runtime LANGUAGES C CXX)
 endif()
+
+##############
+# project needs additonal content like debug images/videos and neural network models
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/additional")
+include(ContentDownload)
+# Set the output directory relative to the current source directory
+set(TARGET_DIR "${CMAKE_CURRENT_SOURCE_DIR}/debug_files")
+# Call the function with the target directory and download URL
+download_and_unzip("${TARGET_DIR}" "http://riege.com.de/tinycar_runtime/debug_files.zip")
 
 set(CMAKE_CXX_STANDARD 17)
 
