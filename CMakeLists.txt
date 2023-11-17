@@ -1,5 +1,43 @@
-cmake_minimum_required(VERSION 3.8)
-project(tinycar_runtime C CXX)
+cmake_minimum_required(VERSION 3.26)
+
+if (APPLE) 
+###################
+# FOR SWIFT BACKENDS
+###################
+    project(tinycar_runtime LANGUAGES C CXX Swift)
+
+    if("${CMAKE_Swift_COMPILER_VERSION}" VERSION_LESS 5.9)
+        message(FATAL_ERROR "Bidirectional C++ Interop requires Swift 5.9 or greater. Have ${CMAKE_Swift_COMPILER_VERSION}")
+    endif()
+
+    if(NOT "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" AND
+    NOT "${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
+        message(FATAL_ERROR "Project requires building with Clang.
+        Have ${CMAKE_CXX_COMPILER_ID}")
+    endif()
+
+    list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
+
+    include(InitializeSwift)
+    # cmake/modules/AddSwift.cmake provides the function for creating the Swift to
+    # C++ bridging header
+    include(AddSwift)
+
+    set(CMAKE_OSX_DEPLOYMENT_TARGET 13.0)
+
+    # After changing Swift interface code, we need to re-run the Swift compiler to generate c++ bridging header
+    set_property(DIRECTORY PROPERTY ADDITIONAL_MAKE_CLEAN_FILES
+   "${CMAKE_CURRENT_SOURCE_DIR}/backends/nn/coreml_backend_swift/coreml_backend.swift")
+
+    add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/backends/nn/coreml_backend_swift")
+else()
+###################
+# NON APPLE
+###################
+    project(tinycar_runtime LANGUAGES C CXX)
+endif()
+
+set(CMAKE_CXX_STANDARD 17)
 
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Debug CACHE STRING "" FORCE)
@@ -36,6 +74,12 @@ ${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp
 )
 
 add_executable(tinycar_runtime ${SOURCES} ${IMGUI_SOURCES})
-target_link_libraries(tinycar_runtime PUBLIC ${OpenCV_LIBS} glfw OpenGL::GL ${CMAKE_DL_LIBS})
+
+if (APPLE) 
+  target_link_libraries(tinycar_runtime PUBLIC ${OpenCV_LIBS} glfw OpenGL::GL ${CMAKE_DL_LIBS} coreml_backend_swift)
+else()
+  target_link_libraries(tinycar_runtime PUBLIC ${OpenCV_LIBS} glfw OpenGL::GL ${CMAKE_DL_LIBS})
+endif()
+
 target_compile_features(tinycar_runtime PRIVATE cxx_std_17)
 target_include_directories(tinycar_runtime PUBLIC ${NV_DIR})

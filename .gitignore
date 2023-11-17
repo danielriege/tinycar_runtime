@@ -1,2 +1,4 @@
 build/
 .vscode/
+debug_files/
+.DS_Store
