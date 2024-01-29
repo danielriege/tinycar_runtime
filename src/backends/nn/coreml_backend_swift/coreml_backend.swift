@@ -39,19 +39,19 @@ public class CoreMLBackend {
         return 0
     }
 
-    public func run(input: CVPixelBufferWrapper, outputBuffer: UnsafeMutableRawPointer) -> Int {
+    public func run(width: Int, height: Int, inputData: UnsafeMutableRawPointer, outputBuffer: UnsafeMutableRawPointer) -> Int {
         if let model = self.model {
-            let pixelBuffer = createCVPixelBufferFromWrapper(cvPixelBufferWrapper: input) 
-
+            let pixelBuffer = createCVPixelBuffer(width: width, height: height, data: inputData) 
             let inputFeatureProvider = CoreMLBackendInput(pixelBuffer: pixelBuffer, featureName: self.inputDescriptor!)
             do {
                 let outputProvider = try model.prediction(from: inputFeatureProvider)
                 let outputFeature = outputProvider.featureValue(for: outputDescriptor!)!  
                 let outputMultiArray = outputFeature.multiArrayValue!
                 //TODO: without memcpy
-                outputMultiArray.dataPointer.withMemoryRebound(to: Float32.self, capacity: outputMultiArray.count) { ptr in
+                let _ = outputMultiArray.dataPointer.withMemoryRebound(to: Float32.self, capacity: outputMultiArray.count) { ptr in
                     memcpy(outputBuffer, ptr, outputMultiArray.count * MemoryLayout<Float32>.size)
                 }
+                
                 return 0
             } catch (let error) {
                 print("[ERROR] CoreMLBackend: \(error)")
@@ -83,27 +83,15 @@ public func createCoreMLBackend() -> CoreMLBackend {
     return CoreMLBackend()
 }
 
-public struct CVPixelBufferWrapper {
-    let width: Int
-    let height: Int
-    let data: UnsafeMutableRawPointer
-
-    public init(width: Int, height: Int, data: UnsafeMutableRawPointer) {
-        self.width = width
-        self.height = height
-        self.data = data
-    }
-}
-
-internal func createCVPixelBufferFromWrapper(cvPixelBufferWrapper: CVPixelBufferWrapper) -> CVPixelBuffer {
+internal func createCVPixelBuffer(width: Int, height: Int, data: UnsafeMutableRawPointer) -> CVPixelBuffer {
     var pixelBuffer: CVPixelBuffer!
     let status = CVPixelBufferCreateWithBytes(
         kCFAllocatorDefault,
-        cvPixelBufferWrapper.width,
-        cvPixelBufferWrapper.height,
+        width,
+        height,
         kCVPixelFormatType_32BGRA,
-        cvPixelBufferWrapper.data,
-        cvPixelBufferWrapper.width * 4,
+        data,
+        width * 4,
         nil,
         nil,
         nil,
@@ -114,6 +102,26 @@ internal func createCVPixelBufferFromWrapper(cvPixelBufferWrapper: CVPixelBuffer
     }
     return pixelBuffer
 }
+
+// internal func createCVPixelBuffer(width: Int, height: Int, data: UnsafeMutableRawPointer) -> CVPixelBuffer {
+//     var pixelBuffer: CVPixelBuffer!
+//     let status = CVPixelBufferCreate(
+//         kCFAllocatorDefault,
+//         width,
+//         height,
+//         kCVPixelFormatType_32BGRA,
+//         nil,
+//         &pixelBuffer
+//     )
+//     if status != kCVReturnSuccess {
+//         fatalError("[ERROR] Failed to create pixel buffer")
+//     }
+//     CVPixelBufferLockBaseAddress(pixelBuffer, CVPixelBufferLockFlags(rawValue: 0))
+//     let pixelData = CVPixelBufferGetBaseAddress(pixelBuffer)!
+//     memcpy(pixelData, data, width * height * 4)
+//     CVPixelBufferUnlockBaseAddress(pixelBuffer, CVPixelBufferLockFlags(rawValue: 0))
+//     return pixelBuffer
+// }
 
 internal class CoreMLBackendInput: MLFeatureProvider {
     let pixelBuffer: CVPixelBuffer

@@ -21,13 +21,13 @@ public:
         return coreml.loadModel(path);
     }
 
-    int run(float32_t* outputBuffer, cv::Mat& input) {
+    int run(float32_t* outputBuffer, cv::Mat input) {
         cv::Mat imageARGB;
         cv::cvtColor(input, imageARGB, cv::COLOR_BGR2BGRA);
         int width = imageARGB.cols;
         int height = imageARGB.rows;
-        CVPixelBufferWrapper inputWrapper = CVPixelBufferWrapper::init(width,height,imageARGB.data);
-        return coreml.run(inputWrapper, outputBuffer);
+        int res = coreml.run(width, height, imageARGB.data, outputBuffer);
+        return res;
     }
 
     cv::Size getInputSize() {
@@ -47,7 +47,7 @@ public:
         return -1;
     }
 
-    int run(float32_t* outputBuffer, cv::Mat& input) {
+    int run(float32_t*  outputBuffer, cv::Mat& input) {
         Logger::error("CoreML backend is not supported on this platform");
         return -1;
     }

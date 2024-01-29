@@ -27,9 +27,9 @@ if (APPLE)
 
     # After changing Swift interface code, we need to re-run the Swift compiler to generate c++ bridging header
     set_property(DIRECTORY PROPERTY ADDITIONAL_MAKE_CLEAN_FILES
-   "${CMAKE_CURRENT_SOURCE_DIR}/backends/nn/coreml_backend_swift/coreml_backend.swift")
+   "${CMAKE_CURRENT_SOURCE_DIR}/src/backends/nn/coreml_backend_swift/coreml_backend.swift")
 
-    add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/backends/nn/coreml_backend_swift")
+    add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/src/backends/nn/coreml_backend_swift")
 else()
 ###################
 # NON APPLE
@@ -67,9 +67,19 @@ set(IMGUI_DIR ./imgui)
 include_directories(${IMGUI_DIR} ${IMGUI_DIR}/backends ..)
 set(NV_DIR ./nv)
 
+include_directories(./src)
+
+file(GLOB SRC_SOURCES src/*.cpp src/viewcontroller/*.cpp)
+
+# Tinycar
+set(TINYCAR_DIR ./tinycar_lib)
+include_directories(${TINYCAR_DIR})
+file(GLOB TINYCAR_SOURCES ${TINYCAR_DIR}/*.cpp)
+
 set(SOURCES
 main.cpp
 ${NV_DIR}/nv.cpp
+${SRC_SOURCES}
 )
 
 set(IMGUI_SOURCES
@@ -82,7 +92,7 @@ ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp
 ${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp
 )
 
-add_executable(tinycar_runtime ${SOURCES} ${IMGUI_SOURCES})
+add_executable(tinycar_runtime ${SOURCES} ${IMGUI_SOURCES} ${TINYCAR_SOURCES})
 
 if (APPLE) 
   target_link_libraries(tinycar_runtime PUBLIC ${OpenCV_LIBS} glfw OpenGL::GL ${CMAKE_DL_LIBS} coreml_backend_swift)
