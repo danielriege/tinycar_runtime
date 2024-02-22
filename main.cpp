@@ -9,6 +9,7 @@
 #include "nv.hpp" // also includes imgui
 
 #include "logger.hpp"
+#include "recorder.hpp"
 
 #include "provider.hpp"
 #include "backends/provider/file_image_provider.hpp"
@@ -54,7 +55,9 @@ typedef struct {
 std::shared_ptr<Provider> imageProvider;
 std::shared_ptr<NNRuntime> nnRuntime;
 std::shared_ptr<nn_config_t> nnConfig;
+std::shared_ptr<Recorder> recorder;
 std::shared_ptr<Tinycar> tinycar;
+
 
 bool doLaneDetection = false;
 
@@ -173,6 +176,8 @@ int main(int argc, char** argv) {
     auto window = initGui("tinycar_esp_runtime");
     nv::DrawList::getInstance().loadState();
 
+    recorder = std::make_shared<Recorder>();
+
     nnConfig = std::make_shared<nn_config_t>();
     parseEnvVariables();
     if (parseProcessArguments(argc, argv) != 0) {
@@ -218,10 +223,30 @@ int main(int argc, char** argv) {
             ImGui::End();
         }
 
+        // show recorder
+        ImGui::Begin("Recorder");
+        if (recorder->isRecordingVideo()) {
+            ImGui::Text("Recording...");
+            if (ImGui::Button("Stop Recording")) {
+                recorder->stopRecord();
+            }
+        } else {
+            ImGui::Text("Not Recording");
+            if (ImGui::Button("Start Recording")) {
+                recorder->startRecord(imageProvider->getFPS());
+            }
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Save Image")) {
+            recorder->takeImage();
+        }
+        ImGui::End();
+
         // show next frame if available
         cv::Mat image;
         if (imageProvider->getImage(image)) {
             currentPlaybackSliderPosition++;
+            recorder->provideFrame(image);
             nv::imshow("tinycar_image:input", image);
 
             // do some preprocessing

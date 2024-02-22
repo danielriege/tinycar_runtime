@@ -64,6 +64,10 @@ public:
         return playing;
     }
 
+    double getFPS() {
+        return fps;
+    }
+
 private:
     std::string filename;
     bool loop;

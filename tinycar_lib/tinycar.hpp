@@ -29,6 +29,7 @@ public:
     Tinycar(const std::string& hostname);
     // Getter
     int getImage(cv::Mat& out);
+    double getFPS();
     
     void setMotorDutyCycle(int16_t dutyCycle);
     void setServoAngle(uint16_t angle);
@@ -76,6 +77,7 @@ private:
 
     bool frameMatPulled;
     cv::Mat frameMat;
+    double current_fps;
 
     // Keeping the state since tccp is stateless
     tccp_control_t last_control_message; 

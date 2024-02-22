@@ -17,6 +17,10 @@ public:
         return tinycar->getImage(out);
     }
 
+    double getFPS() {
+        return tinycar->getFPS();
+    }
+
 private:
     std::shared_ptr<Tinycar> tinycar;
 };

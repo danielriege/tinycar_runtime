@@ -18,6 +18,10 @@ public:
         }
         return false;
     }
+
+    double getFPS() {
+        return 0;
+    }
 private:
     cv::Mat image;
     bool shown;

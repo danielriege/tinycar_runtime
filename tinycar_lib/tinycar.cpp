@@ -19,6 +19,10 @@ int Tinycar::getImage(cv::Mat& out) {
     return false;
 }
 
+double Tinycar::getFPS() {
+    return current_fps;
+}
+
 ////// CONTROL FUNCTIONS
 
 void Tinycar::setMotorDutyCycle(int16_t dutyCycle) {
@@ -90,6 +94,9 @@ bool Tinycar::isAlive() {
 
 void Tinycar::registerTelemetryCallback(std::function<void(TinycarTelemetry)> callback) {
     tccp_client.registerTelemetryCallback([=](tccp_telemetry_t telemetry) {
+        // setting internal state
+        current_fps = telemetry.current_fps;
+        // prepare telemetry message
         last_telemetry_time = std::chrono::system_clock::now();
         TinycarTelemetry tinycarTelemetry;
         tinycarTelemetry.battery_voltage = telemetry.battery_voltage;

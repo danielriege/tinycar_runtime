@@ -7,4 +7,5 @@ public:
     virtual ~Provider() {}
 
     virtual int getImage(cv::Mat&) = 0;
+    virtual double getFPS() = 0;
 };
