@@ -21,7 +21,7 @@ public:
         return coreml.loadModel(path);
     }
 
-    int run(float32_t* outputBuffer, cv::Mat input) {
+    int run(float* outputBuffer, cv::Mat input) {
         cv::Mat imageARGB;
         cv::cvtColor(input, imageARGB, cv::COLOR_BGR2BGRA);
         int width = imageARGB.cols;
@@ -42,12 +42,12 @@ class NNCoreML: public NNRuntime {
 public:
     NNCoreML() {}
 
-    int loadONNX(const std::string& path) {
+    int loadModel(const std::string& path) {
         Logger::error("CoreML backend is not supported on this platform");
         return -1;
     }
 
-    int run(float32_t*  outputBuffer, cv::Mat& input) {
+    int run(float*  outputBuffer, cv::Mat input) {
         Logger::error("CoreML backend is not supported on this platform");
         return -1;
     }

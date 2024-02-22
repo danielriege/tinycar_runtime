@@ -43,7 +43,7 @@ cv::Scalar channel_color_lookup[] = {
 
 typedef struct {
     cv::Size inputSize;
-    float32_t* nnOutputRawBuffer; // pointer to a possibly used buffer
+    float* nnOutputRawBuffer; // pointer to a possibly used buffer
     std::vector<cv::Mat> outputMats; // vector for output images
     uint8_t nOutputMats; // number of elements in outputMats array
 } nn_config_t;
@@ -71,7 +71,7 @@ int prepareNNRuntime(std::shared_ptr<nn_config_t> config) {
     config->nOutputMats = 7;
 
     // allocate output buffer
-    config->nnOutputRawBuffer = new float32_t[config->nOutputMats * inputSize.width * inputSize.height];
+    config->nnOutputRawBuffer = new float[config->nOutputMats * inputSize.width * inputSize.height];
     config->outputMats = std::vector<cv::Mat>(config->nOutputMats);
     for (int i = 0; i < 7; i++) {
         config->outputMats[i] = cv::Mat(inputSize, CV_8UC1);

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <cstring>
 #include <string>
 #include <functional>
 #include <thread>
@@ -10,6 +11,7 @@
 #include <unistd.h>
 #include <iostream>
 #include <condition_variable>
+
 
 #define RTP_PORT 4998
 #define DGRAM_SIZE 1024
