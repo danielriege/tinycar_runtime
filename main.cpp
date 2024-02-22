@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <memory>
+#include <algorithm>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
 
@@ -60,6 +61,18 @@ bool doLaneDetection = false;
 // view controller
 std::unique_ptr<TinycarViewController> tinycarViewController;
 
+char* getCmdOption(char ** begin, char ** end, const std::string& option) {
+    char** itr = std::find(begin, end, option);
+    if (itr != end && ++itr != end) {
+        return *itr;
+    }
+    return 0;
+}
+
+bool cmdOptionExists(char** begin, char** end, const std::string& option) {
+    return std::find(begin, end, option) != end;
+}
+
 int prepareNNRuntime(std::shared_ptr<nn_config_t> config) {
     cv::Size inputSize = nnRuntime->getInputSize();
     if (inputSize.width <= 0 || inputSize.height <= 0) {
@@ -96,43 +109,61 @@ void parseEnvVariables() {
 }
 
 int parseProcessArguments(int argc, char** argv) {
-    if (argc == 3) {
-        // parse video or image file (offline testing)
-        std::string filename = argv[2];
-        // check if file is image or vid
-        std::string extension = filename.substr(filename.find_last_of(".") + 1);
+    // print help
+    if (cmdOptionExists(argv, argv + argc, "-h") || cmdOptionExists(argv, argv + argc, "--help")) {
+        std::cout << "Usage: " << argv[0] << "-t <hostname/ip> -m <model> -f <file>" << std::endl;
+        std::cout << "Options:" << std::endl;
+        std::cout << "  -f <file>           Path to image or video file (offline testing)" << std::endl;
+        std::cout << "  -m <model>          Path to model file" << std::endl;
+        std::cout << "  -t <hostname/ip>    Hostname of tinycar" << std::endl;
+        std::cout << "  -h                  Show this help" << std::endl;
+        return EXIT_FAILURE;
+    }
+    
+    ///// set provider
+    // parse image or video file (offline testing)
+    char* file_path = getCmdOption(argv, argv + argc, "-f");
+    if (file_path) {
+        std::string file_path_str = std::string(file_path);
+        std::string extension = file_path_str.substr(file_path_str.find_last_of(".") + 1);
         if (extension == "mp4") {
             Logger::info("Using Video as provider backend");
-            imageProvider = std::make_shared<FileVideoProvider>(filename);
+            imageProvider = std::make_shared<FileVideoProvider>(file_path_str);
             providerType = ProviderType::VIDEO;
         } else {
             Logger::info("Using Image as provider backend");
-            imageProvider = std::make_shared<FileImageProvider>(filename);
+            imageProvider = std::make_shared<FileImageProvider>(file_path_str);
             providerType = ProviderType::IMAGE;
         }
-    }
-    if (argc >= 2) {
-        // parse model file if model path is provided
-        std::string modelPath = argv[1];
-        {
-        PROFILE_SCOPE("model load/compile");
-        if (nnRuntime->loadModel(modelPath) < 0) {
-            Logger::error("Could not load model: " + modelPath);
-            return EXIT_FAILURE;
+    } else {
+        // set tinycar provider if no file is provided
+        Logger::info("Using Tinycar as provider backend");
+        char* host = getCmdOption(argv, argv + argc, "-t");
+        if (host) {
+            tinycar = std::make_shared<Tinycar>(std::string(host));
+            imageProvider = std::make_shared<TinycarProvider>(tinycar);
+            providerType = ProviderType::TINYCAR;
+        } else {
+            tinycar = std::make_shared<Tinycar>("localhost");
+            imageProvider = std::make_shared<TinycarProvider>(tinycar);
+            providerType = ProviderType::TINYCAR;
         }
+    }
+
+    // parse model file
+    char* model_path = getCmdOption(argv, argv + argc, "-m");
+    if (model_path) {
+        std::string model_file = std::string(model_path);
+        if (nnRuntime->loadModel(model_file) < 0) {
+            Logger::error("Could not load model: " + std::string(model_file));
+            return EXIT_FAILURE;
         }
         if (prepareNNRuntime(nnConfig) != 0) {
             return EXIT_FAILURE;
         }
         doLaneDetection = true;
     }
-    if (argc <= 2) { // set tinycar provider if no file is provided
-        // we assume tinycar provider
-        Logger::info("Using Tinycar as provider backend");
-        tinycar = std::make_shared<Tinycar>("192.168.178.164");
-        imageProvider = std::make_shared<TinycarProvider>(tinycar);
-        providerType = ProviderType::TINYCAR;
-    }
+
     return 0;
 }
 
@@ -147,7 +178,9 @@ int main(int argc, char** argv) {
     if (parseProcessArguments(argc, argv) != 0) {
         return EXIT_FAILURE;
     }
-    setupViewController();
+    if (providerType == ProviderType::TINYCAR) {
+        setupViewController();
+    }
     // only used for video provider
     int currentPlaybackSliderPosition = 0;
 
